@@ -80,7 +80,6 @@ parser.add_argument("--backup", default=default_backup_folder, help="Path where 
 parser.add_argument("--images", default=None, help="Path where images will be stored")
 parser.add_argument("--skipImport", action="store_const", const=True, default=False, help="When present, the script only exports from Bear to Markdown; it skips the import step.")
 parser.add_argument("--excludeTag", action="append", default=[], help="Don't export notes with this tag. Can be used multiple times.")
-parser.add_argument("--init", action="store_const", const=True, default=False, help="Check the output folder for the first time and force all notes to be checked.")
 
 parsed_args = vars(parser.parse_args())
 
