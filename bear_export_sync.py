@@ -37,7 +37,6 @@ or leave list empty for all notes: `limit_export_to_tags = []`
 * Or export as textbundles with images included 
 '''
 
-make_tag_folders = True  # Exports to folders using first tag only, if `multi_tag_folders = False`
 multi_tag_folders = True  # Copies notes to all 'tag-paths' found in note!
                           # Only active if `make_tag_folders = True`
 hide_tags_in_comment_block = True  # Hide tags in HTML comments: `<!-- #mytag -->`
@@ -78,9 +77,10 @@ parser = argparse.ArgumentParser(description="Sync Bear notes")
 parser.add_argument("--out", default=default_out_folder, help="Path where Bear notes will be synced")
 parser.add_argument("--backup", default=default_backup_folder, help="Path where conflicts will be backed up (must be outside of --out)")
 parser.add_argument("--images", default=None, help="Path where images will be stored")
+parser.add_argument("--attachments", default=None, help="Path where attachments will be stored")
 parser.add_argument("--skipImport", action="store_const", const=True, default=False, help="When present, the script only exports from Bear to Markdown; it skips the import step.")
 parser.add_argument("--excludeTag", action="append", default=[], help="Don't export notes with this tag. Can be used multiple times.")
-
+parser.add_argument("--disableTagFolders", action="store_const", const=True, default=False, help="Create tag folders")
 parsed_args = vars(parser.parse_args())
 
 
@@ -89,7 +89,7 @@ set_logging_on = True
 # NOTE! if 'BearNotes' is left blank, all other files in my_sync_service will be deleted!! 
 export_path = parsed_args.get("out")
 no_export_tags = parsed_args.get("excludeTag")  # If a tag in note matches one in this list, it will not be exported.
-
+make_tag_folders = not parsed_args.get("disableTagFolders")  # Exports to folders using first tag only, if `multi_tag_folders = False`
 # NOTE! "export_path" is used for sync-back to Bear, so don't change this variable name!
 multi_export = [(export_path, True)]  # only one folder output here. 
 # Use if you want export to severa places like: Dropbox and OneDrive, etc. See below
@@ -110,6 +110,10 @@ log_file = os.path.join(sync_backup, 'bear_export_sync_log.txt')
 bear_image_path = os.path.join(HOME,
     'Library/Group Containers/9K33E3U3T4.net.shinyfrog.bear/Application Data/Local Files/Note Images')
 assets_path = parsed_args.get("images") if parsed_args.get("images") else os.path.join(export_path, 'BearImages')
+
+bear_files_path = os.path.join(HOME,
+    'Library/Group Containers/9K33E3U3T4.net.shinyfrog.bear/Application Data/Local Files/Note Files')
+attachments_path = parsed_args.get("attachements") if parsed_args.get("attachements") else os.path.join(export_path, 'BearAttachments')
 
 sync_ts = '.sync-time.log'
 export_ts = '.export-time.log'
@@ -134,6 +138,7 @@ def main():
         rsync_files_from_temp()
         if export_image_repository and not export_as_textbundles:
             copy_bear_images()
+            copy_bear_files()
         # notify('Export completed')
         write_log(str(note_count) + ' notes exported to: ' + export_path)
         exit(1)
@@ -192,6 +197,7 @@ def export_markdown():
                         write_file(filepath + '.md', md_text, mod_dt)
                 elif export_image_repository:
                     md_proc_text = process_image_links(md_text, filepath)
+                    md_proc_text = process_attachments_links(md_proc_text, filepath)
                     write_file(filepath + '.md', md_proc_text, mod_dt)
                 else:
                     write_file(filepath + '.md', md_text, mod_dt)
@@ -309,6 +315,16 @@ def process_image_links(md_text, filepath):
     return md_text
 
 
+def process_attachments_links(md_text, filepath):
+    '''
+    Bear attachments links converted to MD links
+    '''
+    root = filepath.replace(temp_path, '')
+    level = len(root.split('/')) - 2
+    parent = '../' * level
+    md_text = re.sub(r'\[file:([^/]+?)\/(.+?)\]', r'[\2](' + parent + r'BearAttachments/\1/\2)', md_text)
+    return md_text
+
 def restore_image_links(md_text):
     '''
     MD image links restored back to Bear links
@@ -329,6 +345,10 @@ def copy_bear_images():
     subprocess.call(['rsync', '-r', '-t', '--delete', 
                     bear_image_path + "/", assets_path])
 
+def copy_bear_files():
+    # Image files copied to a common image repository
+    subprocess.call(['rsync', '-r', '-t', '--delete', 
+                    bear_files_path + "/", attachments_path])
 
 def write_time_stamp():
     # write to time-stamp.txt file (used during sync)
