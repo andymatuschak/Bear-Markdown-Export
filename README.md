@@ -5,7 +5,7 @@
 
 Python script for export and roundtrip sync of Bear's notes to OneDrive, Dropbox, etc. and edit online with [StackEdit](https://stackedit.io/app), or use a markdown editor like *Typora* on Windows or a suitable app on Android. Remote edits and new notes get synced back into Bear with this script.
 
-**See also: [Bear Markdown and textbundle import – with tags from file and folder](https://github.com/rovest/Bear-Markdown-Export/blob/master/Bear%20Import.md)**
+**See also: [Bear Markdown and textbundle import – with tags from file and folder](Bear%20Import.md)**
 
 Set up seamless syncing with Ulysses’ external folders on Mac, with images included!  
 Write and add photos in Bear, then reorder, glue, and publish, export, or print with styles in Ulysses—  
