@@ -169,7 +169,7 @@ def check_db_modified():
 def export_markdown():
     with sqlite3.connect(bear_db) as conn:
         conn.row_factory = sqlite3.Row
-        query = "SELECT * FROM `ZSFNOTE` WHERE `ZTRASHED` LIKE '0' AND `ZARCHIVED` LIKE '0'"
+        query = "SELECT * FROM `ZSFNOTE` WHERE `ZTRASHED` LIKE '0' AND `ZARCHIVED` LIKE '0' AND `ZENCRYPTED` LIKE '0'"
         c = conn.execute(query)
         note_count = 0
         for row in c:
